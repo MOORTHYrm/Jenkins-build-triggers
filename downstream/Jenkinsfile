@@ -1,10 +1,22 @@
 pipeline {
-       agent any
-       stages {
-           stage('Test') {
-               steps {
-                   echo "Downstream pipeline triggered at ${new Date()}"
-               }
-           }
-       }
-   }
+    agent any
+    stages {
+        stage('Copy Dependency') {
+            steps {
+                copyArtifacts(
+                    projectName: 'demo-pipeline-upstream',
+                    selector: lastSuccessful(),
+                    filter: 'output/artifact.txt',
+                    target: 'dependencies/'
+                )
+            }
+        }
+        stage('Test') {
+            steps {
+                echo "Downstream pipeline triggered at ${new Date()}"
+                sh 'echo "Using dependency:" && cat dependencies/output/artifact.txt'
+            }
+        }
+    }
+}
+
