@@ -1,0 +1,24 @@
+// Jenkinsfile (Scripted) — report-generator
+// Section 28.1: Groovy basics — project configuration as plain data
+// Section 28.2: node block — allocate an executor and check out source
+
+def REPORT_NAME = 'nightly-report'
+def OUTPUT_FORMATS = ['pdf', 'csv', 'json']
+def DATA_SOURCES = [
+    sales:     'https://internal.example.com/api/sales',
+    inventory: 'https://internal.example.com/api/inventory',
+    support:   'https://internal.example.com/api/support'
+]
+
+def buildFilename(String format) {
+    return "${REPORT_NAME}.${format}"
+}
+
+node('linux') {
+    echo "Running on ${env.NODE_NAME}, workspace: ${env.WORKSPACE}"
+
+    checkout scm
+
+    echo "Report '${REPORT_NAME}' will be generated in formats: ${OUTPUT_FORMATS.join(', ')}"
+}
+
