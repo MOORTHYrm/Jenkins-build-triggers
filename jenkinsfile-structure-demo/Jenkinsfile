@@ -1,0 +1,40 @@
+// Jenkinsfile — report-generator structure demo
+// Demonstrates the standard Declarative Pipeline structure/skeleton
+
+pipeline {
+    agent { label 'linux' }
+
+    environment {
+        REPORT_NAME = 'nightly-report'
+    }
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Generate Report') {
+            steps {
+                echo "Report '${REPORT_NAME}' generated in formats: pdf, csv, json"
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline finished successfully"
+        }
+        failure {
+            echo "Pipeline failed"
+        }
+        always {
+            echo "Pipeline run complete (runs regardless of outcome)"
+        }
+    }
+}
+
