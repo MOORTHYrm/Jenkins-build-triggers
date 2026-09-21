@@ -1,0 +1,38 @@
+// Jenkinsfile (Declarative) — credentials-variables-demo
+// Demonstrates using Jenkins Credentials Manager instead of hardcoding secrets
+// (this repo's earlier demos used a plain-text token: demo-secret-token —
+//  this version shows how that same value should actually be stored/used)
+
+pipeline {
+    agent { label 'linux' }
+
+    environment {
+        // 'demo-api-token' must be created in Jenkins first:
+        // Manage Jenkins -> Credentials -> Add Credentials -> Secret text
+        // Secret value: your real API/trigger token
+        // ID: demo-api-token
+        API_TOKEN = credentials('demo-api-token')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Use Credential') {
+            steps {
+                // API_TOKEN is masked automatically in the console log
+                sh 'curl -s -X POST -H "Authorization: token $API_TOKEN" https://example.com/api/status || true'
+                echo 'Credential was used above but never printed in plain text.'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Credentials demo pipeline finished.'
+        }
+    }
+}
+

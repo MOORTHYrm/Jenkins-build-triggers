@@ -1,0 +1,16 @@
+// Jenkinsfile.scripted — credentials-variables-demo (Scripted Pipeline variant)
+// Same idea as the Declarative Jenkinsfile in this folder, written in Scripted style.
+
+node('linux') {
+    stage('Checkout') {
+        checkout scm
+    }
+
+    stage('Use Credential') {
+        withCredentials([string(credentialsId: 'demo-api-token', variable: 'API_TOKEN')]) {
+            sh 'curl -s -X POST -H "Authorization: token $API_TOKEN" https://example.com/api/status || true'
+            echo 'Credential was used above but never printed in plain text.'
+        }
+    }
+}
+
