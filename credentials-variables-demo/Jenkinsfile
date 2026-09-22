@@ -4,7 +4,7 @@
 //  this version shows how that same value should actually be stored/used)
 
 pipeline {
-    agent { label 'linux' }
+    agent any
 
     environment {
         // 'demo-api-token' must be created in Jenkins first:
