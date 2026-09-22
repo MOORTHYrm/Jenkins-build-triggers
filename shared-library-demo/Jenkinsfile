@@ -1,0 +1,43 @@
+// Jenkinsfile (Declarative) — shared-library-demo
+// Demonstrates consuming a Jenkins Shared Library (jenkins-shared-library)
+// registered in Manage Jenkins -> System -> Global Pipeline Libraries.
+
+@Library('jenkins-shared-library') _
+import org.example.Utils
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build') {
+            steps {
+                script {
+                    def filename = Utils.buildFilename('nightly-report', 'pdf')
+                    echo "Generated filename from shared library: ${filename}"
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                deployApp('staging')          // from vars/deployApp.groovy
+            }
+        }
+        stage('Notify') {
+            steps {
+                notifySlack('Deployment to staging complete')   // from vars/notifySlack.groovy
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Shared library demo pipeline finished.'
+        }
+    }
+}
+
