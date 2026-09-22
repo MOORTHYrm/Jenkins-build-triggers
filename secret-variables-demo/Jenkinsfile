@@ -1,0 +1,35 @@
+// Jenkinsfile (Declarative) — secret-variables-demo
+// Demonstrates a Secret Variable: a "Secret text" credential injected as
+// an environment variable and automatically masked in the console log.
+
+pipeline {
+    agent any
+
+    environment {
+        // 'demo-secret-variable' must be created in Jenkins first:
+        // Manage Jenkins -> Credentials -> Add Credentials -> Secret text
+        // ID: demo-secret-variable
+        MY_SECRET = credentials('demo-secret-variable')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Use Secret Variable') {
+            steps {
+                echo "Using secret variable now (value is masked below):"
+                sh 'echo "Secret value is: $MY_SECRET"'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Secret variables demo pipeline finished.'
+        }
+    }
+}
+
