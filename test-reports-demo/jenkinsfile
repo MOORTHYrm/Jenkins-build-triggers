@@ -1,0 +1,44 @@
+// Jenkinsfile (Declarative) — test-reports-demo
+// Demonstrates publishing test results using Jenkins' built-in JUnit
+// test report support (the `junit` step). Works with any JUnit-XML-format
+// output, regardless of the language/framework that produced it.
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Run Tests') {
+            steps {
+                // In a real pipeline, replace this block with your actual
+                // test command (pytest --junitxml=..., mvn test, jest --reporters=jest-junit, etc.)
+                // that produces JUnit-format XML. This demo fakes that output
+                // so the reporting side can be seen without a real test suite.
+                sh '''
+                    mkdir -p test-results
+                    cat > test-results/results.xml << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="DemoSuite" tests="3" failures="1" errors="0" skipped="0">
+  <testcase classname="demo.LoginTest" name="testValidLogin" time="0.42"/>
+  <testcase classname="demo.LoginTest" name="testInvalidLogin" time="0.15">
+    <failure message="Expected error message not shown">AssertionError</failure>
+  </testcase>
+  <testcase classname="demo.LogoutTest" name="testLogout" time="0.08"/>
+</testsuite>
+EOF
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            junit 'test-results/*.xml'
+        }
+    }
+}
+
