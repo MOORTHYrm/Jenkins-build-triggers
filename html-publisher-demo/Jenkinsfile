@@ -1,0 +1,52 @@
+// Jenkinsfile (Declarative) — html-publisher-demo
+// Demonstrates publishing an HTML report using the HTML Publisher Plugin.
+// Requires the "HTML Publisher Plugin" to be installed first:
+// Manage Jenkins -> Plugins -> Available plugins -> search "HTML Publisher"
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Generate Report') {
+            steps {
+                sh '''
+                    mkdir -p report
+                    cat > report/index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head><title>Nightly Report</title></head>
+<body>
+  <h1>Nightly Build Report</h1>
+  <p>Generated during build: $BUILD_NUMBER</p>
+  <table border="1" cellpadding="6">
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Tests Passed</td><td>42</td></tr>
+    <tr><td>Coverage</td><td>87%</td></tr>
+  </table>
+</body>
+</html>
+EOF
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            publishHTML(target: [
+                allowMissing: false,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'report',
+                reportFiles: 'index.html',
+                reportName: 'Nightly Report'
+            ])
+        }
+    }
+}
+
