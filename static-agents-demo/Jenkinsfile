@@ -1,0 +1,33 @@
+// Jenkinsfile (Declarative) — static-agents-demo
+// Demonstrates a pipeline scheduled onto a static (permanent) agent by
+// label, instead of running on the built-in controller node.
+//
+// Requires a static agent to be set up first:
+// Manage Jenkins -> Nodes -> New Node -> Permanent Agent -> Label: linux
+// (see README.md in this folder for full setup steps)
+
+pipeline {
+    agent { label 'linux' }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Confirm Agent') {
+            steps {
+                echo "Running on: ${env.NODE_NAME}"
+                echo "Workspace: ${env.WORKSPACE}"
+                sh 'uname -a || echo "uname not available on this OS"'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Static agent demo pipeline finished.'
+        }
+    }
+}
+
