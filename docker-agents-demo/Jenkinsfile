@@ -1,0 +1,39 @@
+// Jenkinsfile (Declarative) — docker-agents-demo
+// Demonstrates the declarative `agent { docker { } }` directive: the
+// simplest way to run an entire pipeline inside a pre-built public
+// Docker image, without writing a Dockerfile or using the lower-level
+// docker.build/inside Groovy API (see docker-pipeline-demo/ for that).
+//
+// Requires the Docker Pipeline plugin and a Docker-capable agent
+// (label 'aws-linux' points at the EC2 SSH agent set up earlier).
+
+pipeline {
+    agent {
+        docker {
+            image 'python:3.12-alpine'
+            label 'aws-linux'
+        }
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Confirm Docker Agent') {
+            steps {
+                echo "Running on: ${env.NODE_NAME}"
+                sh 'python3 --version'
+                sh 'which python3'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Docker agent demo finished.'
+        }
+    }
+}
+
