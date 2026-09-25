@@ -1,0 +1,37 @@
+// Jenkinsfile (Declarative) — dynamic-agents-demo
+// Demonstrates a Docker-based DYNAMIC agent: Jenkins pulls the image,
+// starts a fresh container per build, runs the pipeline inside it, then
+// destroys the container automatically when the build finishes.
+//
+// Requires the "Docker Pipeline" plugin and a Docker daemon reachable
+// from the Jenkins controller/agent. See README.md for setup steps.
+
+pipeline {
+    agent {
+        docker {
+            image 'node:18-alpine'
+        }
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Confirm Agent') {
+            steps {
+                echo "Running on: ${env.NODE_NAME}"
+                sh 'node --version'
+                sh 'uname -a'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Dynamic agent demo pipeline finished. Container will now be removed.'
+        }
+    }
+}
+
