@@ -1,0 +1,59 @@
+// Jenkinsfile (Declarative) — security-reports-demo
+// Demonstrates publishing a dependency vulnerability report using the
+// OWASP Dependency-Check Plugin.
+// Requires the "OWASP Dependency-Check" plugin to be installed first:
+// Manage Jenkins -> Plugins -> Available plugins -> search "OWASP Dependency-Check"
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Run Security Scan') {
+            steps {
+                // In a real pipeline, replace this block with an actual
+                // scanner run, e.g.:
+                //   dependency-check.sh --project "demo-app" --scan . --format XML --out reports/
+                // This demo fakes the XML output so the reporting side is
+                // visible without needing a real scanner installed.
+                sh '''
+                    mkdir -p reports
+                    cat > reports/dependency-check-report.xml << 'EOF'
+<?xml version="1.0"?>
+<analysis xmlns="https://jeremylong.github.io/DependencyCheck/dependency-check.2.0.xsd">
+  <dependencies>
+    <dependency>
+      <fileName>lodash-4.17.15.tgz</fileName>
+      <vulnerabilities>
+        <vulnerability>
+          <name>CVE-2020-8203</name>
+          <severity>HIGH</severity>
+          <description>Prototype pollution in lodash before 4.17.19</description>
+        </vulnerability>
+      </vulnerabilities>
+    </dependency>
+    <dependency>
+      <fileName>express-4.16.0.tgz</fileName>
+      <vulnerabilities/>
+    </dependency>
+  </dependencies>
+</analysis>
+EOF
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            dependencyCheckPublisher(
+                pattern: 'reports/dependency-check-report.xml'
+            )
+        }
+    }
+}
+
