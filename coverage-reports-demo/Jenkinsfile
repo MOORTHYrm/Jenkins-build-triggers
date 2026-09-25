@@ -1,0 +1,50 @@
+// Jenkinsfile (Declarative) — coverage-reports-demo
+// Demonstrates publishing code coverage using Jenkins' Coverage Plugin.
+// Requires the "Coverage" plugin to be installed first:
+// Manage Jenkins -> Plugins -> Available plugins -> search "Coverage"
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Run Tests with Coverage') {
+            steps {
+                // In a real pipeline, replace this block with your actual
+                // coverage-generating test command, e.g.:
+                //   pytest --cov=myapp --cov-report=xml:coverage/cobertura.xml
+                //   jest --coverage --coverageReporters=cobertura
+                //   mvn test jacoco:report
+                // This demo fakes the coverage XML so the reporting side is
+                // visible without needing a real test suite wired up.
+                sh '''
+                    mkdir -p coverage
+                    cat > coverage/cobertura.xml << 'EOF'
+<?xml version="1.0"?>
+<coverage line-rate="0.82" branch-rate="0.75" version="1.9">
+  <packages>
+    <package name="demo.app" line-rate="0.82" branch-rate="0.75">
+      <classes>
+        <class name="LoginModule" filename="login.py" line-rate="0.90" branch-rate="0.80"/>
+        <class name="LogoutModule" filename="logout.py" line-rate="0.70" branch-rate="0.65"/>
+      </classes>
+    </package>
+  </packages>
+</coverage>
+EOF
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            recordCoverage(tools: [[parser: 'COBERTURA', pattern: 'coverage/cobertura.xml']])
+        }
+    }
+}
+
