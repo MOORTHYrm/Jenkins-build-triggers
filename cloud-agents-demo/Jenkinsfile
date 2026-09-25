@@ -1,0 +1,24 @@
+pipeline {
+    agent { label 'aws-linux' }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Confirm Cloud Agent') {
+            steps {
+                echo "Running on: ${env.NODE_NAME}"
+                sh 'uname -a'
+                sh 'curl -s http://169.254.169.254/latest/meta-data/instance-id'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cloud agent pipeline finished.'
+        }
+    }
+}
