@@ -1,0 +1,47 @@
+// Jenkinsfile (Declarative) — docker-pipeline-demo
+// Demonstrates the Docker Pipeline plugin: building a custom image from
+// this folder's Dockerfile, then running a command inside a container
+// built from that image.
+//
+// Requires the "Docker Pipeline" plugin and a Docker daemon reachable
+// from Jenkins (see README.md for setup steps).
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build Custom Image') {
+            steps {
+                script {
+                    dockerImage = docker.build(
+                        "demo-app:${env.BUILD_NUMBER}",
+                        "docker-pipeline-demo"
+                    )
+                }
+            }
+        }
+        stage('Run Inside the Image') {
+            steps {
+                script {
+                    dockerImage.inside {
+                        sh 'echo "Running inside the custom-built image"'
+                        sh 'cat /build-info.txt'
+                        sh 'cat /etc/os-release'
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Docker Pipeline demo finished.'
+        }
+    }
+}
+
