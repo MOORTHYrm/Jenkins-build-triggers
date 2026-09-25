@@ -23,22 +23,69 @@ pipeline {
                 sh '''
                     mkdir -p reports
                     cat > reports/dependency-check-report.xml << 'EOF'
-<?xml version="1.0"?>
-<analysis xmlns="https://jeremylong.github.io/DependencyCheck/dependency-check.2.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<analysis xmlns="https://jeremylong.github.io/DependencyCheck/dependency-check.2.3.xsd">
+  <scanInfo>
+    <engineVersion>8.4.0</engineVersion>
+    <dataSource>
+      <name>NVD CVE Cache</name>
+      <timestamp>2026-09-25T00:00:00.000Z0000</timestamp>
+    </dataSource>
+  </scanInfo>
+  <projectInfo>
+    <name>security-reports-demo</name>
+    <reportDate>2026-09-25T00:00:00.000Z0000</reportDate>
+  </projectInfo>
   <dependencies>
-    <dependency>
+    <dependency isVirtual="false">
       <fileName>lodash-4.17.15.tgz</fileName>
+      <filePath>/reports/lodash-4.17.15.tgz</filePath>
+      <md5>0000000000000000000000000000000</md5>
+      <sha1>0000000000000000000000000000000000000</sha1>
+      <sha256>0000000000000000000000000000000000000000000000000000000000000</sha256>
+      <evidenceCollected>
+        <evidence type="product" confidence="HIGH">
+          <source>package.json</source>
+          <name>name</name>
+          <value>lodash</value>
+        </evidence>
+        <evidence type="version" confidence="HIGHEST">
+          <source>package.json</source>
+          <name>version</name>
+          <value>4.17.15</value>
+        </evidence>
+      </evidenceCollected>
       <vulnerabilities>
-        <vulnerability>
+        <vulnerability source="NVD">
           <name>CVE-2020-8203</name>
+          <cvssV3>
+            <baseScore>7.4</baseScore>
+            <baseSeverity>HIGH</baseSeverity>
+          </cvssV3>
           <severity>HIGH</severity>
-          <description>Prototype pollution in lodash before 4.17.19</description>
+          <cwes>
+            <cwe>CWE-770</cwe>
+          </cwes>
+          <description>Prototype pollution in lodash before 4.17.19 allows a malicious user to modify the prototype of Object via defaultsDeep, merge, and mergeWith functions.</description>
+          <vulnerableSoftware>
+            <software>cpe:2.3:a:lodash:lodash:4.17.15</software>
+          </vulnerableSoftware>
         </vulnerability>
       </vulnerabilities>
     </dependency>
-    <dependency>
+    <dependency isVirtual="false">
       <fileName>express-4.16.0.tgz</fileName>
-      <vulnerabilities/>
+      <filePath>/reports/express-4.16.0.tgz</filePath>
+      <md5>0000000000000000000000000000000</md5>
+      <sha1>0000000000000000000000000000000000000</sha1>
+      <sha256>0000000000000000000000000000000000000000000000000000000000000</sha256>
+      <evidenceCollected>
+        <evidence type="product" confidence="HIGH">
+          <source>package.json</source>
+          <name>name</name>
+          <value>express</value>
+        </evidence>
+      </evidenceCollected>
     </dependency>
   </dependencies>
 </analysis>
