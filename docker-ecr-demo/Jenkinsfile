@@ -1,0 +1,58 @@
+pipeline {
+    agent { label 'aws-linux' }
+
+    triggers { githubPush() }
+
+    environment {
+        AWS_ACCOUNT_ID = '503888849992'   // <-- change
+        AWS_REGION     = 'ap-south-1'
+        ECR_REPO_NAME  = 'jenkins-demo-app'
+        AWS_CREDS_ID   = 'aws-ecr-creds'
+        ECR_REGISTRY   = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        IMAGE_URI      = "${ECR_REGISTRY}/${ECR_REPO_NAME}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps { checkout scm }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh "docker build -t ${ECR_REPO_NAME}:${BUILD_NUMBER} ."
+            }
+        }
+
+        stage('ECR Login') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
+                                  credentialsId: "${AWS_CREDS_ID}"]]) {
+                    sh """
+                        aws ecr get-login-password --region ${AWS_REGION} | \
+                        docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                    """
+                }
+            }
+        }
+
+        stage('Tag & Push') {
+            steps {
+                sh """
+                    docker tag ${ECR_REPO_NAME}:${BUILD_NUMBER} ${IMAGE_URI}:${BUILD_NUMBER}
+                    docker tag ${ECR_REPO_NAME}:${BUILD_NUMBER} ${IMAGE_URI}:latest
+                    docker push ${IMAGE_URI}:${BUILD_NUMBER}
+                    docker push ${IMAGE_URI}:latest
+                """
+            }
+        }
+    }
+
+    post {
+        always {
+            sh "docker rmi ${ECR_REPO_NAME}:${BUILD_NUMBER} ${IMAGE_URI}:${BUILD_NUMBER} ${IMAGE_URI}:latest || true"
+        }
+        success { echo "Pushed: ${IMAGE_URI}:${BUILD_NUMBER}" }
+        failure { echo "Pipeline failed - check console output" }
+    }
+}
+
