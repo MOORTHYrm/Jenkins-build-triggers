@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-app
+  labels:
+    app: simple-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: simple-app
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: simple-app
+    spec:
+      imagePullSecrets:
+        - name: ecr-secret
+      containers:
+        - name: simple-app
+          image: IMAGE_URI
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          env:
+            - name: APP_VERSION
+              value: "build-BUILD_NUM"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 3
+            periodSeconds: 5
+

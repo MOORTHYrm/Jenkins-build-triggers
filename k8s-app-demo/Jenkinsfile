@@ -1,0 +1,79 @@
+pipeline {
+    agent { label 'aws-linux' }
+
+    triggers { githubPush() }
+
+    environment {
+        AWS_ACCOUNT_ID = '503888849992'
+        AWS_REGION     = 'ap-south-1'
+        ECR_REPO_NAME  = 'jenkins-demo-app'
+        AWS_CREDS_ID   = 'aws-ecr-creds'
+        ECR_REGISTRY   = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        IMAGE_TAG      = "k8s-app-${BUILD_NUMBER}"
+        IMAGE_URI      = "${ECR_REGISTRY}/${ECR_REPO_NAME}:${IMAGE_TAG}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps { checkout scm }
+        }
+
+        stage('Docker Build') {
+            steps {
+                dir('k8s-app-demo') {
+                    sh "docker build -t ${ECR_REPO_NAME}:${IMAGE_TAG} ."
+                }
+            }
+        }
+
+        stage('Push to ECR') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
+                                  credentialsId: "${AWS_CREDS_ID}"]]) {
+                    sh """
+                        aws ecr get-login-password --region ${AWS_REGION} | \
+                        docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                        docker tag ${ECR_REPO_NAME}:${IMAGE_TAG} ${IMAGE_URI}
+                        docker push ${IMAGE_URI}
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
+                                  credentialsId: "${AWS_CREDS_ID}"]]) {
+                    sh """
+                        kubectl create secret docker-registry ecr-secret \
+                          --docker-server=${ECR_REGISTRY} \
+                          --docker-username=AWS \
+                          --docker-password="\$(aws ecr get-login-password --region ${AWS_REGION})" \
+                          --dry-run=client -o yaml | kubectl apply -f -
+
+                        sed -e 's|IMAGE_URI|${IMAGE_URI}|g' -e 's|BUILD_NUM|${BUILD_NUMBER}|g' \
+                          k8s-app-demo/k8s/deployment.yaml | kubectl apply -f -
+                        kubectl apply -f k8s-app-demo/k8s/service.yaml
+                    """
+                }
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                sh 'kubectl rollout status deployment/simple-app --timeout=120s'
+                sh 'kubectl get pods -o wide'
+                sh 'kubectl get svc simple-app-svc'
+            }
+        }
+    }
+
+    post {
+        always {
+            sh "docker rmi ${ECR_REPO_NAME}:${IMAGE_TAG} ${IMAGE_URI} || true"
+        }
+        success { echo "Pushed ${IMAGE_URI} and deployed - open http://43.204.142.31:30080" }
+        failure { echo 'Pipeline failed - check console output' }
+    }
+}
+
